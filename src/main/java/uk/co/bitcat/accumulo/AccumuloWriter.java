@@ -38,50 +38,19 @@ public class AccumuloWriter {
 
             try (BatchWriter writer = conn.createBatchWriter(TABLE_NAME, new BatchWriterConfig())) {
 
-                Mutation mutation = new Mutation(new Text(tx.getId()));
-                ColumnVisibility cv = new ColumnVisibility();
-                Text cf;
-                Text cq;
-                Value value;
+                //TODO::Follow the guidance at
+                //TODO::https://accumulo.apache.org/1.8/accumulo_user_manual.html#_running_client_code
+                //TODO::section 4.3 'Writing Data' to create the mutation that represents the transaction.
+                //TODO::Use a column visibility of ColumnVisibility(), i.e. do not pass a value in the constructor, so
+                //TODO::no security label is applied.
+                //TODO::Note that you will invoke mutation.put() several times to add all the details of the transaction.
+                //TODO::Convert all integers to strings as it will make the viewing of the transaction in the
+                //TODO::Mini Accumulo Cluster shell easier for testing.
 
-                for (Map.Entry<Integer, TransactionInput> input : tx.getInputs().entrySet()) {
-                    cf = new Text("inputs");
+                //Mutation mutation = new Mutation(...
+                //...
+                //writer.addMutation(mutation);
 
-                    cq = new Text(input.getKey().toString() + ":txId");
-                    value = new Value(input.getValue().getTxId().getBytes());
-                    mutation.put(cf, cq, cv, value);
-
-                    cq = new Text(input.getKey().toString() + ":utxoIndex");
-                    value = new Value(Integer.toString(input.getValue().getUtxoIndex()).getBytes());
-                    mutation.put(cf, cq, cv, value);
-
-                    cq = new Text(input.getKey().toString() + ":amount");
-                    value = new Value(Integer.toString(input.getValue().getAmount()).getBytes());
-                    mutation.put(cf, cq, cv, value);
-
-                    cq = new Text(input.getKey().toString() + ":address");
-                    value = new Value(input.getValue().getAddress().getBytes());
-                    mutation.put(cf, cq, cv, value);
-                }
-
-                for (Map.Entry<Integer, TransactionOutput> output : tx.getOutputs().entrySet()) {
-                    cf = new Text("outputs");
-
-                    cq = new Text(output.getKey().toString() + ":amount");
-                    value = new Value(Integer.toString(output.getValue().getAmount()).getBytes());
-                    mutation.put(cf, cq, cv, value);
-
-                    cq = new Text(output.getKey().toString() + ":address");
-                    value = new Value(output.getValue().getAddress().getBytes());
-                    mutation.put(cf, cq, cv, value);
-
-                    cf = new Text("utxo");
-                    cq = new Text(output.getKey().toString());
-                    value = new Value("available".getBytes());
-                    mutation.put(cf, cq, cv, value);
-                }
-
-                writer.addMutation(mutation);
             }
         }
     }
@@ -90,27 +59,14 @@ public class AccumuloWriter {
         boolean doubleSpend = false;
 
         try (ConditionalWriter cwriter = conn.createConditionalWriter(TABLE_NAME, new ConditionalWriterConfig())) {
-            for (TransactionInput input : tx.getInputs().values()) {
 
-                ConditionalMutation cm = new ConditionalMutation(new Text(input.getTxId()));
+            //TODO::Check the transaction inputs to ensure they haven't already been spent.
+            //TODO::Use a ConditionalMutation to do this, checking the UTXO is available before writing back the
+            //TODO::UTXO column indicating it has now been taken (if it was available).
+            //TODO::Set the doubleSpend flag accordingly.
+            //TODO::Lines 188 to 192 of https://github.com/apache/accumulo-examples/blob/master/src/main/java/org/apache/accumulo/examples/reservations/ARS.java
+            //TODO::show how this could be achieved.
 
-                Condition ensureUtxoAvailable = new Condition("utxo", Integer.toString(input.getUtxoIndex()));
-                ensureUtxoAvailable.setValue("available");
-                cm.addCondition(ensureUtxoAvailable);
-
-                cm.put("utxo", Integer.toString(input.getUtxoIndex()), tx.getId());
-
-                ConditionalWriter.Status status = cwriter.write(cm).getStatus();
-
-                // This is not production code, we would need to release all other inputs we had reserved in the
-                // event we could not obtain one of them.  Fortunately all the kafka producer only ever creates
-                // transactions with at most one input.
-                if (status != ConditionalWriter.Status.ACCEPTED) {
-                    System.out.println("Detected double spend for transaction: " + tx.getId());
-                    doubleSpend = true;
-                    break;
-                }
-            }
         }
 
         return doubleSpend;
