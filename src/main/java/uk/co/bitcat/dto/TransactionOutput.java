@@ -19,4 +19,12 @@ public class TransactionOutput {
     public String getAddress() {
         return address;
     }
+
+    public void setAmount(int amount) {
+        this.amount = amount;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

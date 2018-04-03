@@ -47,12 +47,16 @@ public class AccumuloWriter {
                 for (Map.Entry<Integer, TransactionInput> input : tx.getInputs().entrySet()) {
                     cf = new Text("inputs");
 
-                    cq = new Text(input.getKey().toString() + ":txid");
+                    cq = new Text(input.getKey().toString() + ":txId");
                     value = new Value(input.getValue().getTxId().getBytes());
                     mutation.put(cf, cq, cv, value);
 
                     cq = new Text(input.getKey().toString() + ":utxoIndex");
                     value = new Value(Integer.toString(input.getValue().getUtxoIndex()).getBytes());
+                    mutation.put(cf, cq, cv, value);
+
+                    cq = new Text(input.getKey().toString() + ":amount");
+                    value = new Value(Integer.toString(input.getValue().getAmount()).getBytes());
                     mutation.put(cf, cq, cv, value);
 
                     cq = new Text(input.getKey().toString() + ":address");

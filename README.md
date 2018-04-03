@@ -8,13 +8,14 @@
 1. To view what is being stored in Accumulo, in the Mini AccumuloCluster console window type `scan -t blockchain`.  If you are storing the transactions correctly they should look similar to the following:
 
 ```
-tx11 inputs:0:address []    account4
-tx11 inputs:0:txid []    tx4
+tx11 inputs:0:address []    account6
+tx11 inputs:0:amount []    100
+tx11 inputs:0:txId []    tx6
 tx11 inputs:0:utxoIndex []    0
-tx11 outputs:0:address []    account8
-tx11 outputs:0:amount []    40
-tx11 outputs:1:address []    account5
-tx11 outputs:1:amount []    60
+tx11 outputs:0:address []    account4
+tx11 outputs:0:amount []    98
+tx11 outputs:1:address []    account9
+tx11 outputs:1:amount []    2
 tx11 utxo:0 []    tx23
 tx11 utxo:1 []    available
 ```
